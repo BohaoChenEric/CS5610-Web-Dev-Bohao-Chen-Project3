@@ -1,57 +1,72 @@
+require('dotenv').config({ path: '../.env' });
 const express = require('express');
-const helper = require('./apis/helper');
-const pokemon = require('./apis/pokemon')
-const users = require('./apis/user')
-const app = express();
-const mongoose = require('mongoose')
-const cors = require('cors')
-const path = require('path')
+const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
 
+const connectDB = require('./db/connection');
+const userRoutes = require('./apis/user');
+const postRoutes = require('./apis/post');
 
-const mongoDBEndpoint = 'mongodb+srv://hunter:banana2@seawebdevfall2021.ykjok.mongodb.net/?retryWrites=true&w=majority';
-mongoose.connect(mongoDBEndpoint,  { useNewUrlParser: true });
+const app = express();
 
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'Error connecting to MongoDB:'));
-
-app.use(cors());
+// Security middleware
+app.use(helmet());
+app.use(morgan('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use('/api/pokemon/', pokemon);
-app.use('/api/users/', users)
-
-
-
-let frontend_dir = path.join(__dirname, '..', 'frontend', 'dist')
-
-app.use(express.static(frontend_dir));
-app.get('*', function (req, res) {
-    console.log("received request");
-    res.sendFile(path.join(frontend_dir, "index.html"));
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    mongoConnection: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
 });
 
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
 
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
-app.listen(process.env.PORT || 8000, function() {
-    console.log("Starting server now...")
-})
+const PORT = process.env.PORT || 3000;
 
+// Connect to MongoDB then start server
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
 
+startServer();
 
-// const http = require('http');
-
-// const server = http.createServer(function (request, response) {
-
-//     response.writeHead(200, { 'Content-Type': 'text/plain' });
-//     response.end('Hello web dev!');
-
-// })
-
-// // 127.0.0.1 === localhost
-// server.listen(8000, "127.0.0.1", function() {
-//     console.log("The server has started!")
-// })
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Promise Rejection:', err);
+  // Give the server a chance to finish current requests
+  server.close(() => process.exit(1));
+});

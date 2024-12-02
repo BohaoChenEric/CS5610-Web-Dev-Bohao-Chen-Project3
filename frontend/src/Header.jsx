@@ -1,45 +1,44 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-
+import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
-import { Link } from 'react-router-dom';
 
-export default function Header() {
+function Header({ user, onLogout }) {
+  const navigate = useNavigate();
 
-    const [activeUsername, setActiveUsername] = useState(null)
+  const handleLogout = () => {
+    onLogout();
+    navigate('/');
+  };
 
-    async function checkIfUserIsLoggedIn() {
-        const response = await axios.get('/api/users/isLoggedIn')
-
-        setActiveUsername(response.data.username)
-    
-    }
-
-    useEffect(() => {
-        checkIfUserIsLoggedIn()
-    }, []);
-
-    async function logOutUser() {
-
-        await axios.post('/api/users/logOut')
-        setActiveUsername(null)
-    }
-
-    if(!activeUsername) {
-
-        return (<div className='header'>
-            <Link to="/login" >Click here to login</Link>
-
-        </div>)
-
-    }
-
-    return (
-        <div className='header'>
-            <div >Welcome, {activeUsername}</div>
-            <button onClick={logOutUser}>Log Out!</button>
-        </div>
-
-    )
-
+  return (
+    <header className="header">
+      <div className="header-container">
+        <Link to="/" className="header-logo">
+          Bohao-Chen-Project3
+        </Link>
+        <nav className="header-nav">
+          {user ? (
+            <>
+              <Link to={`/user/${user.username}`} className="header-link">
+                {user.username}
+              </Link>
+              <button onClick={handleLogout} className="header-button">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="header-link">
+                Login
+              </Link>
+              <Link to="/register" className="header-button">
+                Register
+              </Link>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
 }
+
+export default Header;

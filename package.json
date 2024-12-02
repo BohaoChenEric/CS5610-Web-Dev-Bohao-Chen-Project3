@@ -1,31 +1,27 @@
 {
-  "name": "cs5610_spr23_mod3",
+  "name": "bohao-chen-project3",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bluesky/Twitter Clone",
   "main": "index.js",
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
   "scripts": {
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "build": "npm run build -ws --if-present",
-    "prod": "npm run start -w backend"
+    "audit:fix": "npm audit fix --force && cd frontend && npm audit fix --force && cd ../backend && npm audit fix --force"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ajorgense1-chwy/cs5610_spr23_mod3.git"
-  },
-  "author": "",
+  "keywords": [],
+  "author": "Bohao Chen",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ajorgense1-chwy/cs5610_spr23_mod3/issues"
-  },
-  "homepage": "https://github.com/ajorgense1-chwy/cs5610_spr23_mod3#readme",
   "dependencies": {
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
-    "concurrently": "^8.0.1"
+    "rimraf": "^5.0.1"
   }
 }
